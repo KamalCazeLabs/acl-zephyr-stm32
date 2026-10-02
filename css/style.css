@@ -466,6 +466,39 @@ body {
   color: var(--text-muted);
 }
 
+/* Sub-topic Nav Items inside chapters */
+.subtopic-list {
+  list-style: none;
+  padding-left: 1.2rem;
+  margin: 0.2rem 0 0.4rem;
+  border-left: 1px solid var(--border-subtle);
+}
+
+.subtopic-link {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  line-height: 1.35;
+}
+
+.subtopic-link:hover {
+  color: var(--accent-primary);
+  background: var(--bg-tertiary);
+  padding-left: 0.7rem;
+}
+
+.subtopic-bullet {
+  font-size: 0.55rem;
+  color: var(--accent-primary);
+  opacity: 0.6;
+}
+
 /* ==========================================================================
    Main Reader Workspace
    ========================================================================== */
