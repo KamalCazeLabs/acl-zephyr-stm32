@@ -382,6 +382,117 @@
     }
   }
 
+  // --- Subtopic Smooth Anchor Navigation & Mobile Drawer Close ---
+  function initAnchorNavigation() {
+    const subtopicLinks = document.querySelectorAll('.subtopic-link, a[href*="#sec-"]');
+
+    subtopicLinks.forEach(link => {
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href');
+        if (!href) return;
+
+        const hashIndex = href.indexOf('#');
+        if (hashIndex === -1) return;
+
+        const targetHash = href.substring(hashIndex); // e.g. '#sec-2-1'
+        const pathPart = href.substring(0, hashIndex); // e.g. 'ch02-devicetree-kconfig.html'
+
+        // Determine if target element exists on the CURRENT page
+        const currentPath = window.location.pathname.split('?')[0];
+        const currentFileName = currentPath.substring(currentPath.lastIndexOf('/') + 1) || 'index.html';
+
+        const isSamePage = !pathPart ||
+          pathPart === currentFileName ||
+          currentPath.endsWith(pathPart) ||
+          (pathPart.startsWith('chapters/') && currentPath.endsWith(pathPart.replace('chapters/', ''))) ||
+          (currentFileName === 'index.html' && (pathPart === '' || pathPart === 'index.html'));
+
+        const targetElement = isSamePage ? document.querySelector(targetHash) : null;
+
+        if (targetElement) {
+          e.preventDefault();
+          targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+          // Update active link state
+          document.querySelectorAll('.subtopic-link').forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+
+          if (history.pushState) {
+            history.pushState(null, '', targetHash);
+          } else {
+            window.location.hash = targetHash;
+          }
+
+          // Auto-close sidebar drawer on mobile devices
+          const sidebar = document.getElementById('book-sidebar');
+          if (sidebar && window.innerWidth <= 768) {
+            sidebar.classList.remove('open');
+          }
+        } else {
+          // If navigating across pages, also close mobile drawer so next view is uncluttered
+          const sidebar = document.getElementById('book-sidebar');
+          if (sidebar && window.innerWidth <= 768) {
+            sidebar.classList.remove('open');
+          }
+        }
+      });
+    });
+
+    // Check if initial page load arrived with an anchor hash
+    if (window.location.hash) {
+      setTimeout(() => {
+        try {
+          const target = document.querySelector(window.location.hash);
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Highlight corresponding subtopic link if present
+            document.querySelectorAll('.subtopic-link').forEach(l => {
+              const h = l.getAttribute('href') || '';
+              if (h.endsWith(window.location.hash)) {
+                l.classList.add('active');
+              }
+            });
+          }
+        } catch (err) {
+          console.debug('Invalid anchor hash', err);
+        }
+      }, 150);
+    }
+  }
+
+  // --- Scrollspy: Highlight Active Subtopic on Scroll ---
+  function initScrollspy() {
+    const sections = document.querySelectorAll('[id^="sec-"]');
+    if (!sections.length) return;
+
+    const subtopicLinks = document.querySelectorAll('.subtopic-link');
+    if (!subtopicLinks.length) return;
+
+    window.addEventListener('scroll', () => {
+      const scrollPos = window.scrollY + 120; // offset below sticky header
+      let currentSectionId = null;
+
+      sections.forEach(sec => {
+        const top = sec.offsetTop;
+        if (scrollPos >= top) {
+          currentSectionId = sec.getAttribute('id');
+        }
+      });
+
+      if (currentSectionId) {
+        subtopicLinks.forEach(link => {
+          const href = link.getAttribute('href') || '';
+          if (href.endsWith('#' + currentSectionId)) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+      }
+    }, { passive: true });
+  }
+
   function escapeHtml(str) {
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
@@ -395,6 +506,8 @@
     initBoard();
     initReadingProgress();
     initSidebar();
+    initAnchorNavigation();
+    initScrollspy();
     initCodeCopy();
     initLabChecklists();
     initQuizzes();

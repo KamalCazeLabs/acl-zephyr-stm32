@@ -601,10 +601,53 @@ body.sidebar-hidden .sidebar-floating-tab {
   padding-left: 0.7rem;
 }
 
+.subtopic-link.active {
+  color: var(--accent-primary);
+  background: var(--bg-tertiary);
+  font-weight: 600;
+  padding-left: 0.7rem;
+}
+
 .subtopic-bullet {
   font-size: 0.55rem;
   color: var(--accent-primary);
   opacity: 0.6;
+}
+
+.subtopic-link.active .subtopic-bullet {
+  opacity: 1;
+}
+
+/* Anchor Target Scroll Offset & Highlight (Ensures subtopics clear sticky header) */
+[id^="sec-"],
+.prose h2[id],
+.prose h3[id],
+.quiz-container[id],
+article[id],
+section[id] {
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
+}
+
+:target {
+  scroll-margin-top: calc(var(--header-height) + 1.5rem);
+}
+
+@keyframes target-section-glow {
+  0% {
+    background-color: var(--accent-glow);
+    box-shadow: 0 0 0 8px var(--accent-glow);
+    border-radius: var(--radius-sm);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.prose h2:target,
+.prose h3:target,
+.quiz-container:target {
+  animation: target-section-glow 1.8s ease-out;
 }
 
 /* ==========================================================================

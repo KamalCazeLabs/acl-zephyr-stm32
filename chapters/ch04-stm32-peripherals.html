@@ -276,7 +276,7 @@
           </div>
         </div>
 
-        <h2>4.1 The Zephyr Device Driver Model</h2>
+        <h2 id="sec-4-1">4.1 The Zephyr Device Driver Model</h2>
         <p>
           In bare-metal or standard vendor HALs, reading a sensor requires calling MCU-specific register functions (like <code>HAL_I2C_Master_Transmit()</code>). If you switch to another vendor, your code must be completely rewritten.
         </p>
@@ -310,7 +310,7 @@ ret = i2c_write_read(i2c_dev, SENSOR_ADDR, &reg, 1, buf, 6);</code></pre>
           </div>
         </div>
 
-        <h2>4.2 Asynchronous DMA UART vs Polled UART</h2>
+        <h2 id="sec-4-2">4.2 Asynchronous DMA UART vs Polled UART</h2>
         <p>
           Standard <code>printk()</code> or polled UART burns thousands of CPU cycles waiting for the hardware shift register to transmit byte-by-byte. On STM32, Zephyr supports three distinct UART modes:
         </p>
@@ -330,7 +330,7 @@ ret = i2c_write_read(i2c_dev, SENSOR_ADDR, &reg, 1, buf, 6);</code></pre>
           </div>
         </div>
 
-        <h2>4.3 The Zephyr Sensor API Subsystem</h2>
+        <h2 id="sec-4-3">4.3 The Zephyr Sensor API Subsystem</h2>
         <p>
           Zephyr includes a built-in Sensor Subsystem (<code>CONFIG_SENSOR=y</code>) supporting over 150 commercial environmental, inertial, and optical sensors. Instead of parsing raw registers, you interact with standard physical quantities:
         </p>
@@ -361,12 +361,12 @@ printk("Temperature: %d.%06d C | Pressure: %d.%06d kPa\n",
           </div>
         </div>
 
-        <h2>4.4 Hardware PWM Dimming on STM32 Timers</h2>
+        <h2 id="sec-4-4">4.4 Hardware PWM Dimming on STM32 Timers</h2>
         <p>
           On STM32, hardware Pulse Width Modulation (PWM) is driven by the general-purpose or advanced timer peripherals (TIM1, TIM2, TIM3, etc.). By using Zephyr's <code>pwm_set_dt()</code>, you can smoothly adjust duty cycle with nanosecond or microsecond precision without CPU intervention.
         </p>
 
-        <h2>4.5 Hands-On Lab 4: Integrated Environmental Weather Station</h2>
+        <h2 id="sec-4-5">4.5 Hands-On Lab 4: Integrated Environmental Weather Station</h2>
         <p>
           In this laboratory exercise (provided in <code>samples/04_sensor_i2c_pwm/</code>), we configure an I2C environmental sensor, drive a PWM breathing LED status indicator, and broadcast telemetry over serial console.
         </p>
@@ -534,7 +534,7 @@ int main(void)
         </div>
 
         <!-- Knowledge Check Quiz -->
-        <div class="quiz-container">
+        <div class="quiz-container" id="sec-4-6">
           <div class="quiz-header">
             <span>🧠 Knowledge Check: Module 4</span>
           </div>

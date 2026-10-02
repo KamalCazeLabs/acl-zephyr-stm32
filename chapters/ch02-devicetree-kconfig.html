@@ -276,7 +276,7 @@
           </div>
         </div>
 
-        <h2>2.1 The Two Pillars: DeviceTree vs Kconfig</h2>
+        <h2 id="sec-2-1">2.1 The Two Pillars: DeviceTree vs Kconfig</h2>
         <p>A frequent point of confusion for engineers starting with Zephyr is knowing whether a setting belongs in the <strong>DeviceTree</strong> or in <strong>Kconfig</strong>. Here is the definitive distinction:</p>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0;">
@@ -303,7 +303,7 @@
           </div>
         </div>
 
-        <h2>2.2 Anatomy of a DeviceTree Source (DTS)</h2>
+        <h2 id="sec-2-2">2.2 Anatomy of a DeviceTree Source (DTS)</h2>
         <p>
           A DeviceTree is a hierarchical tree of nodes. Every node can have properties (key-value pairs) and child nodes. Let's look at the anatomical structure:
         </p>
@@ -367,7 +367,7 @@
           <li><strong><code>status = "okay" / "disabled"</code>:</strong> Enables or disables the device. If status is <code>"disabled"</code>, Zephyr does not generate driver instances for it, saving Flash and RAM.</li>
         </ul>
 
-        <h2>2.3 Working with Board Overlays (<code>.overlay</code>)</h2>
+        <h2 id="sec-2-3">2.3 Working with Board Overlays (<code>.overlay</code>)</h2>
         <p>
           Never edit the core board files in the Zephyr installation tree! When you attach external hardware to your STM32 Nucleo board (such as an external LED on PB0, a relay on PC1, or a sensor on I2C1), you create an <strong>overlay file</strong> in your application repository.
         </p>
@@ -385,7 +385,7 @@
           </div>
         </div>
 
-        <h2>2.4 Hands-On Lab 2: External LED & Button with DTS Overlays</h2>
+        <h2 id="sec-2-4">2.4 Hands-On Lab 2: External LED & Button with DTS Overlays</h2>
         <p>
           In this laboratory exercise (provided in <code>samples/02_devicetree_overlay/</code>), we define external peripherals on breadboard pins without hardcoding pin numbers in C code.
         </p>
@@ -568,7 +568,7 @@ int main(void)
         </div>
 
         <!-- Knowledge Check Quiz -->
-        <div class="quiz-container">
+        <div class="quiz-container" id="sec-2-5">
           <div class="quiz-header">
             <span>🧠 Knowledge Check: Module 2</span>
           </div>

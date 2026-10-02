@@ -276,7 +276,7 @@
           </div>
         </div>
 
-        <h2>5.1 The Zephyr Shell Subsystem</h2>
+        <h2 id="sec-5-1">5.1 The Zephyr Shell Subsystem</h2>
         <p>
           In embedded engineering, hardcoding print statements and re-flashing to test every tweak is painfully slow. Zephyr includes a powerful UNIX-like Shell subsystem running directly over your UART ST-Link console:
         </p>
@@ -321,7 +321,7 @@ SHELL_CMD_REGISTER(system, &sub_system, "System diagnostic commands", NULL);</co
           </div>
         </div>
 
-        <h2>5.2 High-Throughput Deferred Logging</h2>
+        <h2 id="sec-5-2">5.2 High-Throughput Deferred Logging</h2>
         <p>
           Calling raw <code>printk()</code> inside an interrupt or a fast control loop blocks CPU execution and alters timing (Heisenbugs). Zephyr's Logging Subsystem (<code>CONFIG_LOG=y</code>) operates in <strong>Deferred Mode</strong> by default:
         </p>
@@ -330,7 +330,7 @@ SHELL_CMD_REGISTER(system, &sub_system, "System diagnostic commands", NULL);</co
           <li>The background idle thread or log processing thread formats and transmits the ASCII string to the UART only when the MCU is otherwise idle!</li>
         </ol>
 
-        <h2>5.3 Industrial CAN Bus (Controller Area Network) on STM32</h2>
+        <h2 id="sec-5-3">5.3 Industrial CAN Bus (Controller Area Network) on STM32</h2>
         <p>
           CAN is the de-facto standard in automotive, robotics, and industrial automation due to its differential noise immunity and hardware collision arbitration.
         </p>
@@ -367,7 +367,7 @@ if (ret != 0) {
           </div>
         </div>
 
-        <h2>5.4 Hands-On Lab 5: Interactive Diagnostic Console</h2>
+        <h2 id="sec-5-4">5.4 Hands-On Lab 5: Interactive Diagnostic Console</h2>
         <p>
           In this laboratory exercise (provided in <code>samples/05_shell_telemetry/</code>), we integrate the Zephyr Shell to allow runtime control of board LEDs, query memory statistics, and stream live sensor telemetry on demand.
         </p>
@@ -496,7 +496,7 @@ int main(void)
         </div>
 
         <!-- Knowledge Check Quiz -->
-        <div class="quiz-container">
+        <div class="quiz-container" id="sec-5-5">
           <div class="quiz-header">
             <span>🧠 Knowledge Check: Module 5</span>
           </div>
