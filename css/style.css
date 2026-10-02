@@ -321,28 +321,36 @@ body {
   flex: 1;
   min-height: calc(100vh - var(--header-height));
   position: relative;
-  overflow-x: hidden;
+  padding-left: var(--sidebar-width);
+  transition: padding-left var(--transition-normal);
 }
 
-/* Sidebar / Vertical Tab */
+/* Sidebar / Vertical Tab - Fixed and independent from main content scroll */
 .book-sidebar {
   width: var(--sidebar-width);
   background: var(--bg-sidebar);
   border-right: 1px solid var(--border-subtle);
   overflow-y: auto;
-  position: sticky;
+  overscroll-behavior: contain;
+  position: fixed;
   top: var(--header-height);
+  left: 0;
+  bottom: 0;
   height: calc(100vh - var(--header-height));
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  transition: margin-left var(--transition-normal), opacity var(--transition-normal), transform var(--transition-normal), visibility var(--transition-normal);
+  transition: transform var(--transition-normal), opacity var(--transition-normal), visibility var(--transition-normal);
   z-index: 90;
 }
 
 /* Collapsed / Hidden State for Vertical Tab (Desktop) */
+body.sidebar-hidden .app-container {
+  padding-left: 0;
+}
+
 body.sidebar-hidden .book-sidebar {
-  margin-left: calc(-1 * var(--sidebar-width));
+  transform: translateX(-100%);
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -1283,8 +1291,11 @@ body.sidebar-hidden .sidebar-floating-tab {
 }
 
 @media (max-width: 768px) {
+  .app-container {
+    padding-left: 0;
+  }
   .sidebar-toggle-btn {
-    display: block;
+    display: flex;
   }
   .book-sidebar {
     position: fixed;
@@ -1296,6 +1307,9 @@ body.sidebar-hidden .sidebar-floating-tab {
   }
   .book-sidebar.open {
     transform: translateX(0);
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
   }
   .site-header {
     padding: 0 1rem;
