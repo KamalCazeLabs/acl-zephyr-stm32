@@ -1,5 +1,9 @@
 /*
- * Mastering Zephyr RTOS on STM32 - Sample 04: I2C Sensor & PWM
+ * Copyright (c) 2026 Apt Computing Labs
+ * "Where Knowledge Meets Innovation"
+ *
+ * Mastering Zephyr RTOS on STM32
+ * SPDX-License-Identifier: Apache-2.0
  */
 
 #include <zephyr/kernel.h>
