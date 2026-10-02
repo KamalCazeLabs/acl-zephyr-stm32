@@ -1,0 +1,14 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build directories
+build/
+twister-out/
+.cache/
+
+# Python venv
+.venv/
+venv/
+__pycache__/
+*.pyc
