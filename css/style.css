@@ -142,13 +142,24 @@ body {
 }
 
 .sidebar-toggle-btn {
-  display: none;
-  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   color: var(--text-primary);
-  padding: 0.5rem;
+  width: 36px;
+  height: 36px;
+  padding: 0;
   border-radius: var(--radius-sm);
   cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .brand-badge {
@@ -310,9 +321,10 @@ body {
   flex: 1;
   min-height: calc(100vh - var(--header-height));
   position: relative;
+  overflow-x: hidden;
 }
 
-/* Sidebar */
+/* Sidebar / Vertical Tab */
 .book-sidebar {
   width: var(--sidebar-width);
   background: var(--bg-sidebar);
@@ -324,8 +336,81 @@ body {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  transition: transform var(--transition-normal);
+  transition: margin-left var(--transition-normal), opacity var(--transition-normal), transform var(--transition-normal), visibility var(--transition-normal);
   z-index: 90;
+}
+
+/* Collapsed / Hidden State for Vertical Tab (Desktop) */
+body.sidebar-hidden .book-sidebar {
+  margin-left: calc(-1 * var(--sidebar-width));
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+body.sidebar-hidden .main-content {
+  max-width: 1080px;
+}
+
+/* Sidebar Collapse Button inside header */
+.sidebar-collapse-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-subtle);
+  color: var(--accent-primary);
+}
+
+/* Floating quick unhide tab on left edge */
+.sidebar-floating-tab {
+  position: fixed;
+  left: 0;
+  top: calc(var(--header-height) + 1.25rem);
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-left: none;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding: 0.5rem 0.75rem 0.5rem 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+  z-index: 80;
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition-fast);
+  backdrop-filter: blur(8px);
+}
+
+.sidebar-floating-tab:hover {
+  background: var(--bg-secondary);
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  padding-right: 0.95rem;
+}
+
+body.sidebar-hidden .sidebar-floating-tab {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  body.sidebar-hidden .sidebar-floating-tab {
+    display: none;
+  }
 }
 
 .sidebar-header {

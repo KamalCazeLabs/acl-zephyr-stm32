@@ -80,24 +80,107 @@
     });
   }
 
-  // --- Mobile Sidebar Toggle ---
+  // --- Sidebar & Vertical Tab Toggle Management ---
+  const SIDEBAR_COLLAPSED_KEY = 'zephyr_sidebar_hidden';
+
   function initSidebar() {
     const toggleBtn = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('book-sidebar');
-    if (toggleBtn && sidebar) {
-      toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-      });
+    if (!sidebar) return;
 
-      // Close when clicking outside on mobile
-      document.addEventListener('click', (e) => {
-        if (sidebar.classList.contains('open') && 
-            !sidebar.contains(e.target) && 
-            !toggleBtn.contains(e.target)) {
+    // Create floating unhide tab if not present
+    let floatingTab = document.getElementById('sidebar-floating-tab');
+    if (!floatingTab) {
+      floatingTab = document.createElement('button');
+      floatingTab.id = 'sidebar-floating-tab';
+      floatingTab.className = 'sidebar-floating-tab';
+      floatingTab.setAttribute('aria-label', 'Show Navigation Sidebar');
+      floatingTab.setAttribute('title', 'Show Navigation Sidebar (press [)');
+      floatingTab.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg><span>Show Menu</span>';
+      document.body.appendChild(floatingTab);
+    }
+
+    // Add collapse button to sidebar header if missing
+    const tocHeading = sidebar.querySelector('.toc-heading');
+    if (tocHeading && !sidebar.querySelector('.sidebar-collapse-btn')) {
+      const colBtn = document.createElement('button');
+      colBtn.className = 'sidebar-collapse-btn';
+      colBtn.id = 'sidebar-collapse-btn';
+      colBtn.title = 'Hide Navigation Tab (or press [)';
+      colBtn.setAttribute('aria-label', 'Hide Navigation Tab');
+      colBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>';
+      colBtn.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
           sidebar.classList.remove('open');
+        } else {
+          document.body.classList.add('sidebar-hidden');
+          localStorage.setItem(SIDEBAR_COLLAPSED_KEY, 'true');
+          updateToggleTooltip();
         }
       });
+      tocHeading.appendChild(colBtn);
     }
+
+    // Restore desktop collapsed state
+    const wasHidden = localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+    if (window.innerWidth > 768 && wasHidden) {
+      document.body.classList.add('sidebar-hidden');
+    }
+
+    function toggleSidebar() {
+      if (window.innerWidth <= 768) {
+        // Mobile: toggle overlay drawer
+        sidebar.classList.toggle('open');
+      } else {
+        // Desktop: toggle hidden/visible vertical tab
+        const isHidden = document.body.classList.toggle('sidebar-hidden');
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, isHidden);
+      }
+      updateToggleTooltip();
+    }
+
+    function updateToggleTooltip() {
+      if (!toggleBtn) return;
+      const isHidden = document.body.classList.contains('sidebar-hidden');
+      toggleBtn.title = isHidden 
+        ? 'Show Navigation Sidebar (press [)' 
+        : 'Hide Navigation Sidebar (press [)';
+      toggleBtn.setAttribute('aria-expanded', !isHidden);
+    }
+
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', toggleSidebar);
+      updateToggleTooltip();
+    }
+
+    if (floatingTab) {
+      floatingTab.addEventListener('click', () => {
+        document.body.classList.remove('sidebar-hidden');
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, 'false');
+        updateToggleTooltip();
+      });
+    }
+
+    // Close when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768 && 
+          sidebar.classList.contains('open') && 
+          !sidebar.contains(e.target) && 
+          toggleBtn && !toggleBtn.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+
+    // Keyboard shortcut: '[' or Ctrl+B / Cmd+B to toggle vertical tab
+    document.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) {
+        return;
+      }
+      if (e.key === '[' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b')) {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    });
 
     // Module collapse toggles
     document.querySelectorAll('.module-title-btn').forEach(btn => {
