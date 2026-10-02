@@ -2,6 +2,9 @@
 
 Welcome to **Mastering Zephyr RTOS on STM32**, a comprehensive digital book and interactive learning platform crafted for students, embedded systems engineers, and firmware professionals.
 
+> *“There is no way around hard work. Embrace it. You have to put in the hours because there is always something which you can improve.”*  
+> — **Roger Federer**
+
 ---
 
 ## 📖 Book Overview & Architecture
