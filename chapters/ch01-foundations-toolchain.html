@@ -678,18 +678,40 @@ cd zephyr-sdk-0.16.8
 
         <h2 id="sec-1-6">1.6 Hands-On Lab 1: First Blinky & VCP Telemetry Engine</h2>
         <p>
-          Let's examine the structure of a complete, production-ready Zephyr project. The source code is provided in your workspace at <code>samples/01_blinky_vcp/</code>.
+          In this foundational project, we configure, build, flash, and verify an industrial-grade Blinky heartbeat firmware on STM32 using Zephyr's GPIO driver model and the ST-Link Virtual COM Port (VCP). The source code is located at <code>samples/01_blinky_vcp/</code>.
         </p>
 
-        <h3>1.4.1 Project Architecture</h3>
-        <p>A standard Zephyr application consists of:</p>
-        <ul>
-          <li><code>CMakeLists.txt</code>: Tells CMake where to find Zephyr and which source files to compile.</li>
-          <li><code>prj.conf</code>: Enables kernel features and peripheral drivers via Kconfig.</li>
-          <li><code>src/main.c</code>: Application logic using Zephyr GPIO and kernel APIs.</li>
-        </ul>
+        <h3>1.6.1 Hardware Setup & Pin Mapping</h3>
+        <p>This project uses the onboard peripherals of your STM32 Nucleo board — no external wiring required:</p>
+        <div style="overflow-x:auto;margin:1rem 0 1.5rem;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border-strong);text-align:left;">
+                <th style="padding:0.6rem;">Peripheral</th>
+                <th style="padding:0.6rem;">STM32 Pin</th>
+                <th style="padding:0.6rem;">DTS Alias</th>
+                <th style="padding:0.6rem;">Electrical Function</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:0.6rem;font-weight:600;color:var(--status-success);">Green User LED (LD2)</td>
+                <td style="padding:0.6rem;"><code>PA5</code> (Nucleo-64)</td>
+                <td style="padding:0.6rem;"><code>led0</code></td>
+                <td style="padding:0.6rem;">Active-HIGH GPIO Output (Push-Pull)</td>
+              </tr>
+              <tr>
+                <td style="padding:0.6rem;font-weight:600;color:var(--accent-primary);">ST-Link VCP Console</td>
+                <td style="padding:0.6rem;"><code>PA2</code> (TX), <code>PA3</code> (RX)</td>
+                <td style="padding:0.6rem;"><code>zephyr,console</code></td>
+                <td style="padding:0.6rem;">USART2 / 115200 Baud, 8 Data Bits, 1 Stop Bit, No Parity</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <h3>1.4.2 Project Configuration: <code>prj.conf</code></h3>
+        <h3>1.6.2 Project Configuration: <code>prj.conf</code></h3>
+        <p>Copy and paste this configuration to enable GPIO drivers, standard printk formatting, and the UART console:</p>
         <div class="code-container">
           <div class="code-header">
             <div class="code-title">
@@ -713,7 +735,8 @@ CONFIG_CBPRINTF_FP_SUPPORT=y</code></pre>
           </div>
         </div>
 
-        <h3>1.4.3 Application Source Code: <code>src/main.c</code></h3>
+        <h3>1.6.3 Application Source Code: <code>src/main.c</code></h3>
+        <p>Here is the complete, self-contained application source code:</p>
         <div class="code-container">
           <div class="code-header">
             <div class="code-title">
@@ -723,14 +746,22 @@ CONFIG_CBPRINTF_FP_SUPPORT=y</code></pre>
             <button class="code-copy-btn">Copy</button>
           </div>
           <div class="code-body">
-            <pre><code>#include &lt;zephyr/kernel.h&gt;
+            <pre><code>/*
+ * Copyright (c) 2026 Apt Computing Labs
+ * "Where Knowledge Meets Innovation"
+ *
+ * Mastering Zephyr RTOS on STM32 - Lab 1: Blinky & VCP
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include &lt;zephyr/kernel.h&gt;
 #include &lt;zephyr/drivers/gpio.h&gt;
 #include &lt;zephyr/sys/printk.h&gt;
 
 /* 1000 msec = 1 sec blink interval */
 #define SLEEP_TIME_MS   1000
 
-/* The devicetree node identifier for the "led0" alias */
+/* Devicetree node identifier for the 'led0' alias */
 #define LED0_NODE DT_ALIAS(led0)
 
 #if !DT_NODE_HAS_STATUS(LED0_NODE, okay)
@@ -758,7 +789,7 @@ int main(void)
 
     /* Configure GPIO pin as output with initial inactive state */
     ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_INACTIVE);
-    if (ret < 0) {
+    if (ret &lt; 0) {
         printk("Error %d: Failed to configure LED pin!\n", ret);
         return 0;
     }
@@ -768,7 +799,7 @@ int main(void)
 
     while (1) {
         ret = gpio_pin_toggle_dt(&led);
-        if (ret < 0) {
+        if (ret &lt; 0) {
             printk("Error toggling LED!\n");
             return 0;
         }
@@ -786,8 +817,8 @@ int main(void)
           </div>
         </div>
 
-        <h3>1.4.4 Building & Flashing via ST-Link</h3>
-        <p>Run the following commands in your terminal to compile and flash to your connected STM32 board:</p>
+        <h3>1.6.4 Building & Flashing via ST-Link</h3>
+        <p>Copy and run these terminal commands to compile and flash directly to your STM32 target:</p>
 
         <div class="code-container">
           <div class="code-header">
@@ -798,20 +829,68 @@ int main(void)
             <button class="code-copy-btn">Copy</button>
           </div>
           <div class="code-body">
-            <pre><code># Change to the sample directory
+            <pre><code># 1. Navigate to the sample directory
 cd samples/01_blinky_vcp
 
-# Build for your selected board:
-west build -b <span class="cmd-board-name">nucleo_f401re</span> -p always
+# 2. Build for your target board:
+west build -b nucleo_f401re -p always
 
-# Flash directly to STM32 via onboard ST-Link SWD
+# 3. Flash firmware via onboard ST-Link SWD:
 west flash
 
-# Open serial terminal monitor (115200 baud, 8N1)
-# On macOS:
+# 4. Open serial terminal monitor (115200 baud, 8N1):
+# macOS:
 minicom -D /dev/tty.usbmodem* -b 115200
-# On Linux:
+# Linux:
 minicom -D /dev/ttyACM0 -b 115200</code></pre>
+          </div>
+        </div>
+
+        <h3>1.6.5 Graphical Hardware Output Simulation & Telemetry</h3>
+        <p>Here is the real-time physical simulation of your hardware execution (observe the blinking LED and live VCP telemetry stream):</p>
+
+        <!-- Graphical Output Simulation Widget -->
+        <div class="hardware-sim-widget" data-sim="blinky-vcp">
+          <div class="sim-widget-header">
+            <div class="sim-widget-title">
+              <span>📟 Live Hardware Output Graphic</span>
+              <span class="sim-status-badge"><span class="sim-status-dot"></span> <span class="sim-run-state">RUNNING (1 Hz)</span></span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Target: <strong class="cmd-board-name">nucleo_f401re</strong> | Pin: <strong>PA5 (LD2)</strong></div>
+          </div>
+          <div class="sim-body-layout">
+            <!-- Left: Graphic STM32 Board -->
+            <div class="sim-board-graphic">
+              <div class="sim-board-pcb">
+                <div class="sim-pcb-label">STMicroelectronics Nucleo</div>
+                <div class="sim-mcu-chip">STM32 MCU<br><span style="font-size:0.55rem;color:#10b981;">Cortex-M</span></div>
+                <div class="sim-led-cluster">
+                  <div class="sim-led-item">
+                    <div class="sim-led-bulb green" id="sim-blinky-led"></div>
+                    <span class="sim-led-label">LD2 (PA5)</span>
+                  </div>
+                  <div class="sim-led-item">
+                    <div class="sim-led-bulb" style="background:#ef4444;border-color:#f87171;box-shadow:0 0 6px #ef4444;"></div>
+                    <span class="sim-led-label">PWR (3V3)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Right: Serial VCP Terminal Output -->
+            <div class="sim-terminal-screen">
+              <div class="sim-terminal-header">
+                <span>ST-Link Virtual COM Port (115200 8N1)</span>
+                <span style="color:#10b981;">● CONNECTED</span>
+              </div>
+              <div class="sim-terminal-log" id="sim-blinky-log"></div>
+            </div>
+          </div>
+          <div class="sim-controls-bar">
+            <div style="display:flex;gap:0.5rem;">
+              <button class="sim-action-btn" id="sim-blinky-pause-btn">⏸ Pause Simulation</button>
+              <button class="sim-action-btn" id="sim-blinky-step-btn">⚡ Manual Pulse</button>
+            </div>
+            <button class="sim-action-btn" id="sim-blinky-clear-btn">🗑 Clear Terminal</button>
           </div>
         </div>
 

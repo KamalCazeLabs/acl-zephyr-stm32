@@ -973,10 +973,357 @@ section[id] {
   font-size: 0.85rem;
   line-height: 1.6;
   color: var(--text-code);
+  background: var(--bg-code);
 }
 
 .code-body pre {
   margin: 0;
+}
+
+/* ==========================================================================
+   Syntax Highlighting Tokens (C, DTS, Kconfig, Bash)
+   ========================================================================== */
+.token-comment {
+  color: #7285a5;
+  font-style: italic;
+}
+.token-preprocessor,
+.token-macro {
+  color: #ec4899;
+  font-weight: 600;
+}
+.token-keyword {
+  color: #38bdf8;
+  font-weight: 600;
+}
+.token-type {
+  color: #34d399;
+}
+.token-zephyr {
+  color: #fbbf24;
+  font-weight: 600;
+}
+.token-func {
+  color: #60a5fa;
+}
+.token-string {
+  color: #f87171;
+}
+.token-number {
+  color: #c084fc;
+}
+.token-punctuation,
+.token-operator {
+  color: #94a3b8;
+}
+.token-prop {
+  color: #38bdf8;
+}
+
+[data-theme="light"] .token-comment { color: #64748b; }
+[data-theme="light"] .token-preprocessor { color: #be185d; }
+[data-theme="light"] .token-keyword { color: #0284c7; }
+[data-theme="light"] .token-type { color: #059669; }
+[data-theme="light"] .token-zephyr { color: #b45309; }
+[data-theme="light"] .token-func { color: #2563eb; }
+[data-theme="light"] .token-string { color: #dc2626; }
+[data-theme="light"] .token-number { color: #7c3aed; }
+[data-theme="light"] .token-punctuation { color: #64748b; }
+[data-theme="light"] .token-prop { color: #0284c7; }
+
+/* Line Highlighting & Copy Button Enhanced */
+.code-container:hover .code-copy-btn {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ==========================================================================
+   Hardware Output Graphics & Real-Time Simulators
+   ========================================================================== */
+.hardware-sim-widget {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  margin: 2rem 0;
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+}
+
+.sim-widget-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  background: rgba(0, 0, 0, 0.35);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sim-widget-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.sim-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.sim-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-dot 1.5s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
+.sim-body-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 860px) {
+  .sim-body-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Virtual Hardware Board Graphic */
+.sim-board-graphic {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  min-height: 220px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+.sim-board-pcb {
+  width: 100%;
+  max-width: 280px;
+  background: linear-gradient(145deg, #064e3b 0%, #065f46 100%);
+  border: 2px solid #047857;
+  border-radius: 12px;
+  padding: 1.25rem 1rem;
+  position: relative;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.sim-pcb-label {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: #a7f3d0;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+}
+
+.sim-mcu-chip {
+  background: #18181b;
+  border: 1px solid #3f3f46;
+  border-radius: 4px;
+  padding: 0.6rem;
+  text-align: center;
+  color: #e4e4e7;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  margin: 0.5rem auto;
+  width: 110px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+.sim-led-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.sim-led-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sim-led-bulb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #064e3b;
+  border: 2px solid #022c22;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
+  transition: all 0.15s ease-out;
+}
+
+.sim-led-bulb.green.on {
+  background: #22c55e;
+  border-color: #86efac;
+  box-shadow: 0 0 16px #22c55e, 0 0 32px rgba(34, 197, 94, 0.8), inset 0 0 4px #ffffff;
+}
+
+.sim-led-bulb.blue.on {
+  background: #38bdf8;
+  border-color: #bae6fd;
+  box-shadow: 0 0 16px #38bdf8, 0 0 32px rgba(56, 189, 248, 0.8), inset 0 0 4px #ffffff;
+}
+
+.sim-led-bulb.pwm {
+  background: #38bdf8;
+  border-color: #bae6fd;
+  transition: box-shadow 0.05s linear, opacity 0.05s linear;
+}
+
+.sim-led-label {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+/* Breadboard / External IO View */
+.sim-breadboard {
+  background: #e2e8f0;
+  border: 2px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 1rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.sim-push-button {
+  background: #dc2626;
+  color: #fff;
+  border: 3px solid #991b1b;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 0 #7f1d1d, 0 6px 10px rgba(0,0,0,0.3);
+  transition: all 0.05s ease;
+  user-select: none;
+}
+
+.sim-push-button:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 #7f1d1d, 0 2px 4px rgba(0,0,0,0.3);
+}
+
+/* Simulated Serial VCP Terminal */
+.sim-terminal-screen {
+  background: #030712;
+  border: 1px solid #1f2937;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+}
+
+.sim-terminal-header {
+  background: #111827;
+  padding: 0.4rem 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1f2937;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #9ca3af;
+}
+
+.sim-terminal-log {
+  padding: 0.8rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #4ade80;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 200px;
+  white-space: pre-wrap;
+}
+
+.sim-terminal-log .log-dim { color: #6b7280; }
+.sim-terminal-log .log-info { color: #38bdf8; }
+.sim-terminal-log .log-warn { color: #fbbf24; }
+.sim-terminal-log .log-err { color: #ef4444; }
+.sim-terminal-log .log-hi { color: #ffffff; font-weight: 700; }
+
+/* Interactive Controls Bar */
+.sim-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.25rem;
+  background: rgba(0, 0, 0, 0.25);
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sim-action-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.75rem;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition-fast);
+}
+
+.sim-action-btn:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
+  border-color: var(--accent-primary);
 }
 
 /* Hardware Pinout / Spec Cards */

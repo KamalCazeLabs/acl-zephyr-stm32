@@ -453,7 +453,30 @@
           </div>
         </div>
 
-        <h3>2.4.3 Application C Code: <code>src/main.c</code></h3>
+        <h3>2.4.3 Kernel Configuration: <code>prj.conf</code></h3>
+        <p>Enable GPIO controller support and standard serial console output:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">KCONFIG</span>
+              <span>samples/02_devicetree_overlay/prj.conf</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># Enable GPIO driver subsystem
+CONFIG_GPIO=y
+
+# Enable serial console
+CONFIG_SERIAL=y
+CONFIG_CONSOLE=y
+CONFIG_UART_CONSOLE=y
+CONFIG_PRINTK=y</code></pre>
+          </div>
+        </div>
+
+        <h3>2.4.4 Application C Code: <code>src/main.c</code></h3>
+        <p>Complete source code with EXTI edge-triggered interrupt callback registration:</p>
         <div class="code-container">
           <div class="code-header">
             <div class="code-title">
@@ -463,7 +486,15 @@
             <button class="code-copy-btn">Copy</button>
           </div>
           <div class="code-body">
-            <pre><code>#include &lt;zephyr/kernel.h&gt;
+            <pre><code>/*
+ * Copyright (c) 2026 Apt Computing Labs
+ * "Where Knowledge Meets Innovation"
+ *
+ * Mastering Zephyr RTOS on STM32 - Lab 2: DTS Overlays
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include &lt;zephyr/kernel.h&gt;
 #include &lt;zephyr/drivers/gpio.h&gt;
 #include &lt;zephyr/sys/printk.h&gt;
 
@@ -534,6 +565,77 @@ int main(void)
 
     return 0;
 }</code></pre>
+          </div>
+        </div>
+
+        <h3>2.4.5 Building & Flashing via ST-Link</h3>
+        <p>Copy and run these terminal commands to compile with your overlay patched in automatically:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">BASH</span>
+              <span>Build and Flash Commands</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># 1. Navigate to sample directory
+cd samples/02_devicetree_overlay
+
+# 2. Build (Zephyr automatically detects boards/nucleo_f401re.overlay):
+west build -b nucleo_f401re -p always
+
+# 3. Flash to STM32:
+west flash
+
+# 4. Open serial terminal monitor:
+minicom -D /dev/tty.usbmodem* -b 115200</code></pre>
+          </div>
+        </div>
+
+        <h3>2.4.6 Interactive Breadboard & EXTI Interrupt Output Graphic</h3>
+        <p>Test the hardware interrupt response virtually by clicking the physical tactile switch below:</p>
+
+        <!-- Graphical Output Simulation Widget -->
+        <div class="hardware-sim-widget" data-sim="gpio-interrupt">
+          <div class="sim-widget-header">
+            <div class="sim-widget-title">
+              <span>🔌 Live Breadboard & EXTI Interrupt Simulator</span>
+              <span class="sim-status-badge"><span class="sim-status-dot"></span> <span>ARM NVIC ACTIVE</span></span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Pins: <strong>LED=PB0</strong> | <strong>BTN=PB1 (EXTI1)</strong></div>
+          </div>
+          <div class="sim-body-layout">
+            <!-- Left: Graphic Breadboard -->
+            <div class="sim-board-graphic">
+              <div class="sim-breadboard">
+                <div style="font-family:var(--font-mono);font-size:0.7rem;color:#475569;font-weight:700;">EXTERNAL HARDWARE BREADBOARD</div>
+                <div style="display:flex;align-items:center;justify-content:space-around;width:100%;margin-top:0.5rem;">
+                  <!-- External Blue LED -->
+                  <div class="sim-led-item">
+                    <div class="sim-led-bulb blue" id="sim-ext-led"></div>
+                    <span class="sim-led-label" style="color:#0f172a;">Ext LED (PB0)</span>
+                  </div>
+                  <!-- External Tactile Push Button -->
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:0.35rem;">
+                    <button class="sim-push-button" id="sim-ext-btn" title="Click to press hardware button!">PRESS</button>
+                    <span class="sim-led-label" style="color:#0f172a;">Button (PB1)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Right: Serial VCP Output -->
+            <div class="sim-terminal-screen">
+              <div class="sim-terminal-header">
+                <span>ST-Link Serial Terminal Monitor (115200 8N1)</span>
+                <span style="color:#10b981;">● CONNECTED</span>
+              </div>
+              <div class="sim-terminal-log" id="sim-ext-log"></div>
+            </div>
+          </div>
+          <div class="sim-controls-bar">
+            <span>💡 <em>Click the red button above or the button below to trigger the interrupt callback</em></span>
+            <button class="sim-action-btn" onclick="document.getElementById('sim-ext-btn').click();">🔘 Trigger PB1 EXTI Interrupt</button>
           </div>
         </div>
 

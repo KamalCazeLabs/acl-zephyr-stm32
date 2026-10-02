@@ -447,7 +447,34 @@ printk("Temperature: %d.%06d C | Pressure: %d.%06d kPa\n",
           </div>
         </div>
 
-        <h3>4.5.3 Application Code: <code>samples/04_sensor_i2c_pwm/src/main.c</code></h3>
+        <h3>4.5.3 Project Configuration: <code>prj.conf</code></h3>
+        <p>Enable I2C master driver, hardware PWM subsystem, and standard serial printk:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">KCONFIG</span>
+              <span>samples/04_sensor_i2c_pwm/prj.conf</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># Enable I2C and Sensor Subsystem
+CONFIG_I2C=y
+CONFIG_SENSOR=y
+
+# Enable Hardware PWM Driver
+CONFIG_PWM=y
+
+# Enable Serial Console & Floating Point formatting
+CONFIG_SERIAL=y
+CONFIG_CONSOLE=y
+CONFIG_UART_CONSOLE=y
+CONFIG_PRINTK=y
+CONFIG_CBPRINTF_FP_SUPPORT=y</code></pre>
+          </div>
+        </div>
+
+        <h3>4.5.4 Application Code: <code>samples/04_sensor_i2c_pwm/src/main.c</code></h3>
         <div class="code-container">
           <div class="code-header">
             <div class="code-title">
@@ -457,12 +484,20 @@ printk("Temperature: %d.%06d C | Pressure: %d.%06d kPa\n",
             <button class="code-copy-btn">Copy</button>
           </div>
           <div class="code-body">
-            <pre><code>#include &lt;zephyr/kernel.h&gt;
+            <pre><code>/*
+ * Copyright (c) 2026 Apt Computing Labs
+ * "Where Knowledge Meets Innovation"
+ *
+ * Mastering Zephyr RTOS on STM32 - Lab 4: Sensor & PWM
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include &lt;zephyr/kernel.h&gt;
 #include &lt;zephyr/drivers/sensor.h&gt;
 #include &lt;zephyr/drivers/pwm.h&gt;
 #include &lt;zephyr/sys/printk.h&gt;
 
-#define PWM_PERIOD_NS   PWM_MSEC(20U) /* 50 Hz PWM period */
+#define PWM_PERIOD_NS   PWM_MSEC(20U) /* 50 Hz PWM period (20ms) */
 #define STEP_NS         PWM_USEC(500U)
 
 static const struct pwm_dt_spec pwm_led = PWM_DT_SPEC_GET(DT_ALIAS(pwm_led0));
@@ -504,6 +539,79 @@ int main(void)
     }
     return 0;
 }</code></pre>
+          </div>
+        </div>
+
+        <h3>4.5.5 Building & Flashing via ST-Link</h3>
+        <p>Copy and run these terminal commands:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">BASH</span>
+              <span>Build and Flash Commands</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># 1. Navigate to directory
+cd samples/04_sensor_i2c_pwm
+
+# 2. Build for target board:
+west build -b nucleo_f401re -p always
+
+# 3. Flash to STM32:
+west flash
+
+# 4. Open serial terminal monitor:
+minicom -D /dev/tty.usbmodem* -b 115200</code></pre>
+          </div>
+        </div>
+
+        <h3>4.5.6 Live Environmental Telemetry & PWM Breathing LED Graphic</h3>
+        <p>Real-time hardware output graphic showing timer PWM modulation and live simulated BMP280 sensors:</p>
+
+        <!-- Graphical Output Simulation Widget -->
+        <div class="hardware-sim-widget" data-sim="sensor-pwm">
+          <div class="sim-widget-header">
+            <div class="sim-widget-title">
+              <span>🌊 Live Hardware PWM & Environmental Telemetry Graphic</span>
+              <span class="sim-status-badge"><span class="sim-status-dot"></span> <span>TIM2 PWM ACTIVE</span></span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Duty: <strong id="sim-pwm-duty" style="color:#38bdf8;">0%</strong> | Frequency: <strong>50 Hz (20ms)</strong></div>
+          </div>
+          <div class="sim-body-layout">
+            <!-- Left: Graphic Nucleo PWM LED -->
+            <div class="sim-board-graphic">
+              <div class="sim-board-pcb">
+                <div class="sim-pcb-label">TIM2 Channel 1 PWM Generator</div>
+                <div style="text-align:center;margin:0.5rem 0;">
+                  <div class="sim-led-bulb pwm" id="sim-pwm-led" style="margin:0 auto;width:32px;height:32px;"></div>
+                  <div style="font-family:var(--font-mono);font-size:0.7rem;color:#e2e8f0;margin-top:0.4rem;font-weight:700;">User LD2 (PA5)</div>
+                  <div style="font-size:0.65rem;color:#94a3b8;">Sinusoidal Duty Cycle Wave</div>
+                </div>
+              </div>
+            </div>
+            <!-- Right: Environmental Sensor Dashboard -->
+            <div class="sim-terminal-screen" style="padding:1rem;background:#030712;">
+              <div style="font-family:var(--font-mono);font-size:0.75rem;color:#9ca3af;margin-bottom:0.75rem;font-weight:700;">BMP280 DIGITAL I2C SENSOR STREAM (0x76)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
+                <div style="background:#111827;border:1px solid #1f2937;border-radius:6px;padding:0.75rem;text-align:center;">
+                  <div style="font-size:0.7rem;color:#94a3b8;">Ambient Temperature</div>
+                  <div id="sim-sensor-temp" style="font-size:1.25rem;font-weight:700;color:#f87171;font-family:var(--font-mono);margin-top:0.25rem;">24.85 °C</div>
+                </div>
+                <div style="background:#111827;border:1px solid #1f2937;border-radius:6px;padding:0.75rem;text-align:center;">
+                  <div style="font-size:0.7rem;color:#94a3b8;">Barometric Pressure</div>
+                  <div id="sim-sensor-press" style="font-size:1.25rem;font-weight:700;color:#38bdf8;font-family:var(--font-mono);margin-top:0.25rem;">1013.25 hPa</div>
+                </div>
+              </div>
+              <div style="font-family:var(--font-mono);font-size:0.7rem;color:#10b981;margin-top:1rem;">
+                [I2C1] Transfer OK: 6 bytes fetched in 150 µs via Fast-Mode 400kHz
+              </div>
+            </div>
+          </div>
+          <div class="sim-controls-bar">
+            <span>💡 <em>PWM breathing runs autonomously on STM32 hardware timers without blocking CPU threads</em></span>
+            <span style="font-size:0.75rem;color:var(--text-muted);">Sampling: Continuous 40 Hz</span>
           </div>
         </div>
 

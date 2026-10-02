@@ -497,6 +497,441 @@
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // ==========================================================================
+  // Client-Side Syntax Highlighter for C, DTS, Bash, and Kconfig
+  // ==========================================================================
+  function highlightCCode(code) {
+    const tokens = [];
+    function saveToken(html) {
+      tokens.push(html);
+      return `___CTOK${tokens.length - 1}___`;
+    }
+
+    // 1. Comments
+    code = code.replace(/\/\*[\s\S]*?\*\//g, m => saveToken(`<span class="token-comment">${escapeHtml(m)}</span>`));
+    code = code.replace(/\/\/[^\n\r]*/g, m => saveToken(`<span class="token-comment">${escapeHtml(m)}</span>`));
+
+    // 2. Preprocessor directives
+    code = code.replace(/#\s*(?:include|define|undef|ifdef|ifndef|if|else|elif|endif|pragma|error)\b[^\n\r]*/g, m => {
+      const formatted = escapeHtml(m).replace(/(&lt;[^&]+&gt;|"[^"]+")/g, '<span class="token-string">$1</span>');
+      return saveToken(`<span class="token-preprocessor">${formatted}</span>`);
+    });
+
+    // 3. String literals & characters
+    code = code.replace(/"(?:\\.|[^"\\])*"/g, m => saveToken(`<span class="token-string">${escapeHtml(m)}</span>`));
+    code = code.replace(/'(?:\\.|[^'\\])+'/g, m => saveToken(`<span class="token-string">${escapeHtml(m)}</span>`));
+
+    // 4. Numbers (hex and dec)
+    code = code.replace(/\b(?:0x[0-9a-fA-F]+|\d+(?:\.\d+)?)\b/g, m => saveToken(`<span class="token-number">${m}</span>`));
+
+    // 5. Zephyr APIs, macros and subsystems
+    const zephyrApis = /\b(?:printk|k_msleep|k_sleep|k_busy_wait|k_uptime_get_32|k_uptime_get|gpio_pin_configure_dt|gpio_pin_toggle_dt|gpio_pin_set_dt|gpio_pin_get_dt|gpio_is_ready_dt|gpio_init_callback|gpio_add_callback|gpio_pin_interrupt_configure_dt|pwm_set_pulse_dt|pwm_set_dt|sensor_sample_fetch|sensor_channel_get|k_msgq_put|k_msgq_get|k_sem_give|k_sem_take|k_mutex_lock|k_mutex_unlock|wdt_setup|wdt_install_timeout|wdt_feed|can_send|can_add_rx_filter|LOG_INF|LOG_ERR|LOG_WRN|LOG_DBG|DEVICE_DT_GET|DEVICE_DT_GET_ANY|DT_ALIAS|DT_NODELABEL|DT_CHOSEN|DT_NODE_HAS_STATUS|GPIO_DT_SPEC_GET|K_THREAD_DEFINE|K_MSGQ_DEFINE|K_SEM_DEFINE|K_MUTEX_DEFINE|SHELL_CMD_REGISTER|SHELL_STATIC_SUBCMD_SET_CREATE|ARG_UNUSED|BIT|GPIO_OUTPUT_INACTIVE|GPIO_OUTPUT_ACTIVE|GPIO_INPUT|GPIO_INT_EDGE_TO_ACTIVE)\b/g;
+    code = code.replace(zephyrApis, m => saveToken(`<span class="token-zephyr">${m}</span>`));
+
+    // 6. C Keywords
+    const keywords = /\b(?:void|int|char|short|long|float|double|signed|unsigned|const|static|volatile|struct|enum|union|typedef|extern|inline|return|if|else|switch|case|default|while|for|do|break|continue|goto|sizeof)\b/g;
+    code = code.replace(keywords, m => saveToken(`<span class="token-keyword">${m}</span>`));
+
+    // 7. Types & Booleans
+    const types = /\b(?:int8_t|int16_t|int32_t|int64_t|uint8_t|uint16_t|uint32_t|uint64_t|size_t|ssize_t|bool|true|false|NULL)\b/g;
+    code = code.replace(types, m => saveToken(`<span class="token-type">${m}</span>`));
+
+    // 8. Function calls
+    code = code.replace(/\b([a-zA-Z_]\w*)(?=\s*\()/g, m => saveToken(`<span class="token-func">${m}</span>`));
+
+    // Restore tokens
+    code = code.replace(/___CTOK(\d+)___/g, (_, id) => tokens[id]);
+    return code;
+  }
+
+  function highlightDTSCode(code) {
+    const tokens = [];
+    function saveToken(html) {
+      tokens.push(html);
+      return `___DTOK${tokens.length - 1}___`;
+    }
+
+    code = code.replace(/\/\*[\s\S]*?\*\//g, m => saveToken(`<span class="token-comment">${escapeHtml(m)}</span>`));
+    code = code.replace(/\/\/[^\n\r]*/g, m => saveToken(`<span class="token-comment">${escapeHtml(m)}</span>`));
+    code = code.replace(/"(?:\\.|[^"\\])*"/g, m => saveToken(`<span class="token-string">${escapeHtml(m)}</span>`));
+    code = code.replace(/\b(?:0x[0-9a-fA-F]+|\d+)\b/g, m => saveToken(`<span class="token-number">${m}</span>`));
+    code = code.replace(/\b(compatible|reg|status|interrupts|label|gpios|aliases|model|#address-cells|#size-cells)\b/g, m => saveToken(`<span class="token-prop">${m}</span>`));
+    code = code.replace(/&[a-zA-Z0-9_]+/g, m => saveToken(`<span class="token-zephyr">${m}</span>`));
+    code = code.replace(/\/dts-v1\/;/g, m => saveToken(`<span class="token-preprocessor">${m}</span>`));
+
+    code = code.replace(/___DTOK(\d+)___/g, (_, id) => tokens[id]);
+    return code;
+  }
+
+  function highlightBashCode(code) {
+    const tokens = [];
+    function saveToken(html) {
+      tokens.push(html);
+      return `___BTOK${tokens.length - 1}___`;
+    }
+
+    code = code.replace(/#[^\n\r]*/g, m => saveToken(`<span class="token-comment">${escapeHtml(m)}</span>`));
+    code = code.replace(/"(?:\\.|[^"\\])*"/g, m => saveToken(`<span class="token-string">${escapeHtml(m)}</span>`));
+    code = code.replace(/\b(west|cd|ninja|cmake|minicom|screen|pyocd|git|echo|mkdir|build|flash)\b/g, m => saveToken(`<span class="token-keyword">${m}</span>`));
+    code = code.replace(/(?:^|\s)(-[a-zA-Z]|--[a-zA-Z0-9_-]+)/g, m => saveToken(`<span class="token-prop">${m}</span>`));
+    code = code.replace(/\b(nucleo_f401re|nucleo_l476rg|nucleo_g071rb)\b/g, m => saveToken(`<span class="cmd-board-name token-string">${m}</span>`));
+
+    code = code.replace(/___BTOK(\d+)___/g, (_, id) => tokens[id]);
+    return code;
+  }
+
+  function initSyntaxHighlighting() {
+    document.querySelectorAll('.code-container').forEach(container => {
+      // Ensure copy button is present
+      const header = container.querySelector('.code-header');
+      if (header && !header.querySelector('.code-copy-btn')) {
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'code-copy-btn';
+        copyBtn.textContent = 'Copy';
+        header.appendChild(copyBtn);
+      }
+
+      const langBadge = container.querySelector('.code-lang-badge');
+      const codeEl = container.querySelector('code');
+      if (!codeEl) return;
+
+      const lang = (langBadge ? langBadge.textContent.trim().toUpperCase() : '') || 'C';
+      const rawText = codeEl.innerText;
+
+      if (lang === 'C') {
+        codeEl.innerHTML = highlightCCode(rawText);
+      } else if (lang === 'DTS' || lang === 'DEVICETREE') {
+        codeEl.innerHTML = highlightDTSCode(rawText);
+      } else if (lang === 'BASH' || lang === 'SHELL' || lang === 'TERMINAL') {
+        codeEl.innerHTML = highlightBashCode(rawText);
+      } else if (rawText.includes('#include') || rawText.includes('int main(')) {
+        codeEl.innerHTML = highlightCCode(rawText);
+      }
+    });
+  }
+
+  // ==========================================================================
+  // Interactive Hardware Output Simulators
+  // ==========================================================================
+  function initSimulations() {
+    // --- Lab 1: Blinky & VCP Simulator ---
+    const blinkyWidget = document.querySelector('[data-sim="blinky-vcp"]');
+    if (blinkyWidget) {
+      const ledBulb = blinkyWidget.querySelector('#sim-blinky-led');
+      const logBox = blinkyWidget.querySelector('#sim-blinky-log');
+      const pauseBtn = blinkyWidget.querySelector('#sim-blinky-pause-btn');
+      const stepBtn = blinkyWidget.querySelector('#sim-blinky-step-btn');
+      const clearBtn = blinkyWidget.querySelector('#sim-blinky-clear-btn');
+      const runState = blinkyWidget.querySelector('.sim-run-state');
+
+      let isPaused = false;
+      let ledState = false;
+      let cycleCount = 0;
+      let blinkTimer = null;
+
+      function appendLog(line) {
+        if (!logBox) return;
+        const now = new Date();
+        const timeStr = String(now.getSeconds()).padStart(2, '0') + '.' + String(now.getMilliseconds()).padStart(3, '0');
+        const p = document.createElement('div');
+        p.innerHTML = `<span class="log-dim">[00:00:${timeStr}]</span> ${line}`;
+        logBox.appendChild(p);
+        logBox.scrollTop = logBox.scrollHeight;
+        while (logBox.children.length > 15) {
+          logBox.removeChild(logBox.firstChild);
+        }
+      }
+
+      function tickBlinky() {
+        if (isPaused) return;
+        ledState = !ledState;
+        if (ledBulb) {
+          if (ledState) ledBulb.classList.add('on');
+          else ledBulb.classList.remove('on');
+        }
+
+        if (ledState) {
+          cycleCount++;
+          appendLog(`<span class="log-info">&lt;inf&gt; main:</span> Blinky ping #${cycleCount} - LED Toggled <span class="log-hi">(HIGH / ON)</span>`);
+        } else {
+          appendLog(`<span class="log-dim">&lt;inf&gt; main:</span> Sleep cycle (1000 ms) - LED Toggled <span class="log-dim">(LOW / OFF)</span>`);
+        }
+      }
+
+      appendLog(`<span class="log-hi">=== Mastering Zephyr RTOS on STM32 - Lab 1 ===</span>`);
+      appendLog(`<span class="log-info">&lt;inf&gt; boot:</span> Target board initialized via ST-Link VCP`);
+      blinkTimer = setInterval(tickBlinky, 1000);
+
+      if (pauseBtn) {
+        pauseBtn.addEventListener('click', () => {
+          isPaused = !isPaused;
+          pauseBtn.textContent = isPaused ? '▶ Resume Simulation' : '⏸ Pause Simulation';
+          if (runState) runState.textContent = isPaused ? 'PAUSED' : 'RUNNING (1 Hz)';
+        });
+      }
+
+      if (stepBtn) {
+        stepBtn.addEventListener('click', () => {
+          tickBlinky();
+        });
+      }
+
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          if (logBox) logBox.innerHTML = '';
+        });
+      }
+    }
+
+    // --- Lab 2: External LED & Button Interrupt Simulator ---
+    const gpioWidget = document.querySelector('[data-sim="gpio-interrupt"]');
+    if (gpioWidget) {
+      const extLedBulb = gpioWidget.querySelector('#sim-ext-led');
+      const pressBtn = gpioWidget.querySelector('#sim-ext-btn');
+      const extLog = gpioWidget.querySelector('#sim-ext-log');
+      let extLedState = false;
+      let btnPressCount = 0;
+
+      function logExt(msg) {
+        if (!extLog) return;
+        const now = new Date();
+        const timeStr = String(now.getSeconds()).padStart(2, '0') + '.' + String(now.getMilliseconds()).padStart(3, '0');
+        const p = document.createElement('div');
+        p.innerHTML = `<span class="log-dim">[00:00:${timeStr}]</span> ${msg}`;
+        extLog.appendChild(p);
+        extLog.scrollTop = extLog.scrollHeight;
+      }
+
+      logExt(`<span class="log-hi">=== Zephyr RTOS Lab 2: DTS Overlays &amp; GPIO Interrupts ===</span>`);
+      logExt(`<span class="log-info">&lt;inf&gt; gpio:</span> Ext LED on Port GPIOB Pin 0 | Ext Button on Port GPIOB Pin 1`);
+      logExt(`Click "Press Breadboard Button" to trigger STM32 EXTI interrupt...`);
+
+      if (pressBtn) {
+        pressBtn.addEventListener('click', () => {
+          btnPressCount++;
+          extLedState = !extLedState;
+          if (extLedBulb) {
+            if (extLedState) extLedBulb.classList.add('on');
+            else extLedBulb.classList.remove('on');
+          }
+          logExt(`<span class="log-warn">[EXTI1_IRQ]</span> Hardware Button Pressed (Pulse #${btnPressCount})! Ext LED (PB0) -&gt; <span class="log-hi">${extLedState ? 'HIGH (ON)' : 'LOW (OFF)'}</span>`);
+        });
+      }
+    }
+
+    // --- Lab 3: Multithread Message Queue Pipeline Simulator ---
+    const threadWidget = document.querySelector('[data-sim="thread-pipeline"]');
+    if (threadWidget) {
+      const threadLog = threadWidget.querySelector('#sim-thread-log');
+      const queueBadge = threadWidget.querySelector('#sim-queue-count');
+      const triggerBtn = threadWidget.querySelector('#sim-thread-trigger-btn');
+      let seq = 0;
+      let queueCount = 0;
+
+      function logThread(msg) {
+        if (!threadLog) return;
+        const now = new Date();
+        const timeStr = String(now.getSeconds()).padStart(2, '0') + '.' + String(now.getMilliseconds()).padStart(3, '0');
+        const p = document.createElement('div');
+        p.innerHTML = `<span class="log-dim">[00:00:${timeStr}]</span> ${msg}`;
+        threadLog.appendChild(p);
+        threadLog.scrollTop = threadLog.scrollHeight;
+      }
+
+      function produceSample() {
+        seq++;
+        queueCount++;
+        if (queueBadge) queueBadge.textContent = `${queueCount}/10`;
+        const temp = (23.0 + (seq % 12) * 0.2).toFixed(1);
+        const hum = 45 + (seq % 8);
+        logThread(`<span class="log-info">[Producer (Pri 6)]</span> Put payload #${seq} (Temp: ${temp} C, Hum: ${hum}%) into k_msgq`);
+
+        // Consumer immediately preempts because Pri 4 > Pri 6
+        setTimeout(() => {
+          queueCount = Math.max(0, queueCount - 1);
+          if (queueBadge) queueBadge.textContent = `${queueCount}/10`;
+          logThread(`<span class="log-hi">[Consumer (Pri 4)]</span> Preempted! Fetched #${seq} -&gt; Dispatched over VCP UART`);
+        }, 350);
+      }
+
+      logThread(`<span class="log-hi">=== Zephyr Kernel Lab 3: Thread Synchronization &amp; Queues ===</span>`);
+      logThread(`Initialized producer_thread (Pri 6) and consumer_thread (Pri 4)`);
+
+      const tInterval = setInterval(produceSample, 3000);
+      if (triggerBtn) {
+        triggerBtn.addEventListener('click', () => {
+          produceSample();
+        });
+      }
+    }
+
+    // --- Lab 4: Sensor & Hardware PWM Breathing LED Simulator ---
+    const pwmWidget = document.querySelector('[data-sim="sensor-pwm"]');
+    if (pwmWidget) {
+      const pwmBulb = pwmWidget.querySelector('#sim-pwm-led');
+      const dutyLabel = pwmWidget.querySelector('#sim-pwm-duty');
+      const tempVal = pwmWidget.querySelector('#sim-sensor-temp');
+      const pressVal = pwmWidget.querySelector('#sim-sensor-press');
+
+      let duty = 0;
+      let step = 2;
+      let angle = 0;
+
+      function updatePwm() {
+        angle += 0.05;
+        duty = Math.round(((Math.sin(angle) + 1) / 2) * 100);
+        if (pwmBulb) {
+          pwmBulb.style.opacity = (0.2 + (duty / 100) * 0.8).toFixed(2);
+          pwmBulb.style.boxShadow = `0 0 ${Math.round(duty / 4)}px #38bdf8, 0 0 ${Math.round(duty / 2)}px rgba(56, 189, 248, 0.8)`;
+        }
+        if (dutyLabel) dutyLabel.textContent = `${duty}%`;
+
+        // Subtle sensor jitter
+        if (Math.random() > 0.95 && tempVal) {
+          const t = (24.5 + Math.random() * 0.4).toFixed(2);
+          tempVal.textContent = `${t} °C`;
+        }
+        if (Math.random() > 0.95 && pressVal) {
+          const p = (1013.1 + Math.random() * 0.5).toFixed(2);
+          pressVal.textContent = `${p} hPa`;
+        }
+        requestAnimationFrame(updatePwm);
+      }
+      requestAnimationFrame(updatePwm);
+    }
+
+    // --- Lab 5: Interactive Zephyr Shell Console Simulator ---
+    const shellWidget = document.querySelector('[data-sim="shell-console"]');
+    if (shellWidget) {
+      const shellLog = shellWidget.querySelector('#sim-shell-log');
+      const shellInput = shellWidget.querySelector('#sim-shell-input');
+      const shellLed = shellWidget.querySelector('#sim-shell-board-led');
+      let shellLedState = false;
+
+      function logShell(line) {
+        if (!shellLog) return;
+        const p = document.createElement('div');
+        p.innerHTML = line;
+        shellLog.appendChild(p);
+        shellLog.scrollTop = shellLog.scrollHeight;
+      }
+
+      function runShellCmd(cmd) {
+        const clean = cmd.trim();
+        logShell(`<span style="color:#ffffff;">nucleo:~$ ${escapeHtml(clean)}</span>`);
+
+        const lower = clean.toLowerCase();
+        if (lower === 'help') {
+          logShell(`Available commands:\n  led       : Control onboard LED state (on/off)\n  system    : System telemetry inspection\n  kernel    : Kernel stack and thread inspector\n  clear     : Clear terminal buffer`);
+        } else if (lower === 'led on') {
+          shellLedState = true;
+          if (shellLed) shellLed.classList.add('on');
+          logShell(`<span class="log-info">[SHELL]</span> User LD2 (PA5) turned <span class="log-hi">ON</span>`);
+        } else if (lower === 'led off') {
+          shellLedState = false;
+          if (shellLed) shellLed.classList.remove('on');
+          logShell(`<span class="log-dim">[SHELL]</span> User LD2 (PA5) turned <span class="log-dim">OFF</span>`);
+        } else if (lower === 'system status' || lower === 'system') {
+          logShell(`=== System Telemetry Status ===\nUptime: ${Math.round(performance.now())} ms\nTarget Board: nucleo_f401re\nZephyr Kernel: v3.7.0 (ACL LTS)`);
+        } else if (lower === 'kernel threads' || lower === 'kernel') {
+          logShell(`Threads:\n  0x20000a40  idle        (pri 15)  [READY]\n  0x20001020  shell_uart  (pri 7)   [ACTIVE]\n  0x20001500  logging     (pri 14)  [BLOCKED]`);
+        } else if (lower === 'clear') {
+          shellLog.innerHTML = '';
+        } else {
+          logShell(`<span class="log-err">shell: command not found: ${escapeHtml(clean)}</span>. Type 'help' for available commands.`);
+        }
+      }
+
+      logShell(`*** Zephyr Diagnostic Shell ready. Type 'help' or click commands below ***`);
+
+      if (shellInput) {
+        shellInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            runShellCmd(shellInput.value);
+            shellInput.value = '';
+          }
+        });
+      }
+
+      shellWidget.querySelectorAll('[data-shell-cmd]').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const c = chip.getAttribute('data-shell-cmd');
+          runShellCmd(c);
+        });
+      });
+    }
+
+    // --- Lab 6: Watchdog Supervisor Simulator ---
+    const wdtWidget = document.querySelector('[data-sim="watchdog"]');
+    if (wdtWidget) {
+      const bar = wdtWidget.querySelector('#sim-wdt-bar');
+      const wdtLog = wdtWidget.querySelector('#sim-wdt-log');
+      const faultBtn = wdtWidget.querySelector('#sim-wdt-fault-btn');
+      const wdtLed = wdtWidget.querySelector('#sim-wdt-led');
+
+      let wdtMs = 2000;
+      let faultActive = false;
+
+      function logWdt(msg) {
+        if (!wdtLog) return;
+        const now = new Date();
+        const timeStr = String(now.getSeconds()).padStart(2, '0') + '.' + String(now.getMilliseconds()).padStart(3, '0');
+        const p = document.createElement('div');
+        p.innerHTML = `<span class="log-dim">[00:00:${timeStr}]</span> ${msg}`;
+        wdtLog.appendChild(p);
+        wdtLog.scrollTop = wdtLog.scrollHeight;
+      }
+
+      logWdt(`<span class="log-hi">Hardware Watchdog active (Timeout: 2000 ms). System guarded.</span>`);
+
+      setInterval(() => {
+        if (!faultActive) {
+          wdtMs = 2000;
+          if (wdtLed) wdtLed.classList.toggle('on');
+          logWdt(`<span class="log-info">&lt;inf&gt; wdt:</span> Supervisor heartbeat: Watchdog fed.`);
+        }
+      }, 700);
+
+      setInterval(() => {
+        if (faultActive) {
+          wdtMs = Math.max(0, wdtMs - 100);
+          if (bar) {
+            bar.style.width = `${(wdtMs / 2000) * 100}%`;
+            bar.style.background = '#ef4444';
+          }
+          if (wdtMs === 0) {
+            logWdt(`<span class="log-err">🚨 [IWDG TIMEOUT] System lockup detected! Resetting Cortex-M core...</span>`);
+            faultActive = false;
+            if (faultBtn) faultBtn.textContent = '⚠️ Inject Thread Deadlock';
+            setTimeout(() => {
+              wdtMs = 2000;
+              if (bar) {
+                bar.style.width = '100%';
+                bar.style.background = '#10b981';
+              }
+              logWdt(`<span class="log-hi">*** Booting Zephyr OS v3.7.0 (Recovered from Watchdog Reset) ***</span>`);
+            }, 1000);
+          }
+        } else {
+          if (bar) {
+            bar.style.width = '100%';
+            bar.style.background = '#10b981';
+          }
+        }
+      }, 100);
+
+      if (faultBtn) {
+        faultBtn.addEventListener('click', () => {
+          faultActive = !faultActive;
+          faultBtn.textContent = faultActive ? 'Active Fault! (Watchdog Starving)' : '⚠️ Inject Thread Deadlock';
+          if (faultActive) {
+            logWdt(`<span class="log-warn">&lt;wrn&gt; wdt:</span> Fault injected! Supervisor thread frozen. Feeding stopped.`);
+          }
+        });
+      }
+    }
+  }
+
   // --- Global Initialization ---
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
@@ -509,6 +944,8 @@
     initAnchorNavigation();
     initScrollspy();
     initCodeCopy();
+    initSyntaxHighlighting();
+    initSimulations();
     initLabChecklists();
     initQuizzes();
     initSearch();

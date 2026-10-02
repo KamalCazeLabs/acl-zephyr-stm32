@@ -465,6 +465,87 @@ int main(void)
           </div>
         </div>
 
+        <h3>5.4.3 Building & Flashing via ST-Link</h3>
+        <p>Compile and flash the interactive shell diagnostic console:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">BASH</span>
+              <span>Build and Flash Commands</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># 1. Navigate to directory
+cd samples/05_shell_telemetry
+
+# 2. Build for target board:
+west build -b nucleo_f401re -p always
+
+# 3. Flash to STM32:
+west flash
+
+# 4. Open serial terminal monitor (115200 baud, 8N1):
+minicom -D /dev/tty.usbmodem* -b 115200</code></pre>
+          </div>
+        </div>
+
+        <h3>5.4.4 Interactive Zephyr Diagnostic Shell Simulator</h3>
+        <p>Test the interactive CLI console below. Click any command chip or type your own command and press Enter:</p>
+
+        <!-- Graphical Output Simulation Widget -->
+        <div class="hardware-sim-widget" data-sim="shell-console">
+          <div class="sim-widget-header">
+            <div class="sim-widget-title">
+              <span>💻 Interactive Zephyr Diagnostic Shell Graphic</span>
+              <span class="sim-status-badge"><span class="sim-status-dot"></span> <span>UART SHELL READY</span></span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Prompt: <code>nucleo:~$ </code> | Speed: <strong>115200 8N1</strong></div>
+          </div>
+          <div class="sim-body-layout">
+            <!-- Left: Graphic Nucleo Board with Reactive Shell LED -->
+            <div class="sim-board-graphic">
+              <div class="sim-board-pcb">
+                <div class="sim-pcb-label">STMicroelectronics Nucleo-64</div>
+                <div class="sim-mcu-chip">STM32 MCU<br><span style="font-size:0.55rem;color:#10b981;">Shell Controlled</span></div>
+                <div class="sim-led-cluster">
+                  <div class="sim-led-item">
+                    <div class="sim-led-bulb green" id="sim-shell-board-led"></div>
+                    <span class="sim-led-label">LD2 (PA5)</span>
+                  </div>
+                  <div class="sim-led-item">
+                    <div class="sim-led-bulb" style="background:#ef4444;border-color:#f87171;box-shadow:0 0 6px #ef4444;"></div>
+                    <span class="sim-led-label">PWR (3V3)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Right: Interactive Shell Terminal -->
+            <div class="sim-terminal-screen">
+              <div class="sim-terminal-header">
+                <span>Zephyr Shell Subsystem v3.7.0</span>
+                <span style="color:#10b981;">● ONLINE</span>
+              </div>
+              <div class="sim-terminal-log" id="sim-shell-log" style="height:150px;min-height:150px;"></div>
+              <div style="display:flex;align-items:center;background:#0d1117;border-top:1px solid #1f2937;padding:0.4rem 0.75rem;">
+                <span style="color:#38bdf8;font-family:var(--font-mono);font-size:0.75rem;margin-right:0.4rem;">nucleo:~$</span>
+                <input type="text" id="sim-shell-input" placeholder="Type command (e.g. led on, system status) and press Enter..." style="flex:1;background:transparent;border:0;color:#f8fafc;font-family:var(--font-mono);font-size:0.75rem;outline:none;">
+              </div>
+            </div>
+          </div>
+          <div class="sim-controls-bar">
+            <div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;">
+              <span style="font-size:0.75rem;color:var(--text-muted);">Quick Commands:</span>
+              <button class="sim-action-btn" data-shell-cmd="led on">led on</button>
+              <button class="sim-action-btn" data-shell-cmd="led off">led off</button>
+              <button class="sim-action-btn" data-shell-cmd="system status">system status</button>
+              <button class="sim-action-btn" data-shell-cmd="kernel threads">kernel threads</button>
+              <button class="sim-action-btn" data-shell-cmd="help">help</button>
+            </div>
+            <button class="sim-action-btn" data-shell-cmd="clear">🗑 Clear</button>
+          </div>
+        </div>
+
         <!-- Interactive Lab Checklist -->
         <div class="lab-checklist-card">
           <div class="lab-title-row">

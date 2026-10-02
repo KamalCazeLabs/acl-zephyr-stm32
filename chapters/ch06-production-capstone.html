@@ -385,7 +385,38 @@ arm-zephyr-eabi-gdb build/zephyr/zephyr.elf
           <li><strong>Fault Injection CLI Command:</strong> Allows an engineer to simulate a deadlocked thread or memory corruption, proving that the hardware watchdog automatically recovers the system.</li>
         </ul>
 
-        <h3>6.4.1 Capstone Source Code: <code>samples/06_capstone_industrial_monitor/src/main.c</code></h3>
+        <h3>6.4.1 Architecture: STM32 Independent Watchdog (IWDG)</h3>
+        <p>The IWDG is clocked by its own dedicated 32 kHz internal Low-Speed RC oscillator (LSI), completely isolated from the main PLL clock. Even if the Cortex-M core hangs, crashes into a HardFault loop, or the main crystal oscillator fails, the IWDG continues running down to zero and forces a hardware MCU reset.</p>
+
+        <h3>6.4.2 Project Configuration: <code>prj.conf</code></h3>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">KCONFIG</span>
+              <span>samples/06_capstone_industrial_monitor/prj.conf</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># Enable Hardware Watchdog Subsystem
+CONFIG_WATCHDOG=y
+CONFIG_WDT_DISABLE_AT_BOOT=n
+
+# Enable GPIO for Heartbeat LED
+CONFIG_GPIO=y
+
+# Enable Deferred Logging
+CONFIG_LOG=y
+CONFIG_LOG_MODE_DEFERRED=y
+
+# Enable Interactive Shell for Fault Injection
+CONFIG_SHELL=y
+CONFIG_SHELL_BACKEND_SERIAL=y</code></pre>
+          </div>
+        </div>
+
+        <h3>6.4.3 Capstone Source Code: <code>src/main.c</code></h3>
+        <p>Complete implementation with watchdog channel installation, periodic feeding, and CLI fault injection:</p>
         <div class="code-container">
           <div class="code-header">
             <div class="code-title">
@@ -395,7 +426,15 @@ arm-zephyr-eabi-gdb build/zephyr/zephyr.elf
             <button class="code-copy-btn">Copy</button>
           </div>
           <div class="code-body">
-            <pre><code>#include &lt;zephyr/kernel.h&gt;
+            <pre><code>/*
+ * Copyright (c) 2026 Apt Computing Labs
+ * "Where Knowledge Meets Innovation"
+ *
+ * Mastering Zephyr RTOS on STM32 - Lab 6: Industrial Watchdog Capstone
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include &lt;zephyr/kernel.h&gt;
 #include &lt;zephyr/drivers/watchdog.h&gt;
 #include &lt;zephyr/drivers/gpio.h&gt;
 #include &lt;zephyr/shell/shell.h&gt;
@@ -481,6 +520,77 @@ int main(void)
 
     return 0;
 }</code></pre>
+          </div>
+        </div>
+
+        <h3>6.4.4 Building & Flashing via ST-Link</h3>
+        <p>Copy and run these terminal commands to compile and flash:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">BASH</span>
+              <span>Build and Flash Commands</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># 1. Navigate to directory
+cd samples/06_capstone_industrial_monitor
+
+# 2. Build for target board:
+west build -b nucleo_f401re -p always
+
+# 3. Flash to STM32:
+west flash
+
+# 4. Open serial terminal monitor:
+minicom -D /dev/tty.usbmodem* -b 115200</code></pre>
+          </div>
+        </div>
+
+        <h3>6.4.5 Live Hardware Watchdog Supervisor & Fault Injection Graphic</h3>
+        <p>Test the hardware watchdog fail-safe recovery in real-time. Click <strong>"Inject Task Deadlock"</strong> below to simulate a frozen task and witness automatic MCU reboot:</p>
+
+        <!-- Graphical Output Simulation Widget -->
+        <div class="hardware-sim-widget" data-sim="watchdog">
+          <div class="sim-widget-header">
+            <div class="sim-widget-title">
+              <span>🛡️ Live STM32 Watchdog (IWDG) Supervisor Graphic</span>
+              <span class="sim-status-badge"><span class="sim-status-dot"></span> <span>IWDG ARMED</span></span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Window: <strong>2000 ms</strong> | Source: <strong>LSI (32 kHz)</strong></div>
+          </div>
+          <div class="sim-body-layout">
+            <!-- Left: Graphic Nucleo Watchdog PCB -->
+            <div class="sim-board-graphic" style="padding:1rem;">
+              <div class="sim-board-pcb" style="text-align:center;">
+                <div class="sim-pcb-label">STM32 Hardware IWDG Core</div>
+                <div style="margin:0.75rem 0;">
+                  <div style="font-size:0.7rem;color:#a7f3d0;margin-bottom:0.25rem;">Watchdog Countdown Window</div>
+                  <div style="background:#022c22;border:1px solid #059669;border-radius:9999px;height:14px;overflow:hidden;padding:2px;">
+                    <div id="sim-wdt-bar" style="background:#10b981;height:100%;width:100%;border-radius:9999px;transition:width 0.1s linear, background 0.2s ease;"></div>
+                  </div>
+                </div>
+                <div class="sim-led-cluster" style="margin-top:0.75rem;">
+                  <div class="sim-led-item">
+                    <div class="sim-led-bulb green" id="sim-wdt-led"></div>
+                    <span class="sim-led-label">Heartbeat (LD2)</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Right: Serial Terminal Console -->
+            <div class="sim-terminal-screen">
+              <div class="sim-terminal-header">
+                <span>ST-Link Serial Terminal Monitor (115200 8N1)</span>
+                <span style="color:#10b981;">● CONNECTED</span>
+              </div>
+              <div class="sim-terminal-log" id="sim-wdt-log"></div>
+            </div>
+          </div>
+          <div class="sim-controls-bar">
+            <span>💡 <em>Watchdog is refreshed every 500ms. Inject deadlock to starve the dog and trigger reboot</em></span>
+            <button class="sim-action-btn" id="sim-wdt-fault-btn" style="background:#dc2626;color:#ffffff;border-color:#b91c1c;">⚠️ Inject Thread Deadlock</button>
           </div>
         </div>
 

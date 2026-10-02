@@ -372,14 +372,62 @@ void sensor_thread_entry(void *arg1, void *arg2, void *arg3)
           In this laboratory exercise (located in <code>samples/03_kernel_threads_queues/</code>), we implement a multi-threaded data pipeline with thread synchronization and safe data exchange.
         </p>
 
-        <h3>3.4.1 Architecture Overview</h3>
-        <ul>
-          <li><strong>Producer Thread (Priority 6):</strong> Samples simulated sensor readings (temperature & humidity) every 1000ms. Packs the telemetry into a <code>struct sensor_data</code> and pushes it to a <code>k_msgq</code>.</li>
-          <li><strong>Consumer Thread (Priority 4 - Higher!):</strong> Blocks on <code>k_msgq_get</code>. When data arrives, it wakes up immediately, performs statistical moving-average analysis, checks for threshold alarms, and blinks the onboard LED.</li>
-          <li><strong>Hardware Push Button ISR:</strong> Triggers an emergency high-priority telemetry dump on user request.</li>
-        </ul>
+        <h3>3.4.1 Architecture Overview & Priority Matrix</h3>
+        <p>In this project, two threads communicate via a lock-free Zephyr Message Queue (<code>k_msgq</code>):</p>
+        <div style="overflow-x:auto;margin:1rem 0 1.5rem;">
+          <table style="width:100%;border-collapse:collapse;font-size:0.875rem;">
+            <thead>
+              <tr style="border-bottom:2px solid var(--border-strong);text-align:left;">
+                <th style="padding:0.6rem;">Thread</th>
+                <th style="padding:0.6rem;">Priority</th>
+                <th style="padding:0.6rem;">Stack Size</th>
+                <th style="padding:0.6rem;">Role in Pipeline</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--border-subtle);">
+                <td style="padding:0.6rem;font-weight:600;color:var(--accent-primary);">Producer Thread</td>
+                <td style="padding:0.6rem;"><code>6</code> (Preemptive)</td>
+                <td style="padding:0.6rem;">2048 bytes</td>
+                <td style="padding:0.6rem;">Gathers telemetry every 1000ms and puts into <code>k_msgq</code></td>
+              </tr>
+              <tr>
+                <td style="padding:0.6rem;font-weight:600;color:var(--status-success);">Consumer Thread</td>
+                <td style="padding:0.6rem;"><code>4</code> (Higher Priority!)</td>
+                <td style="padding:0.6rem;">2048 bytes</td>
+                <td style="padding:0.6rem;">Blocks on <code>k_msgq_get</code>; preempts producer immediately when packet arrives</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <h3>3.4.2 Application Code: <code>samples/03_kernel_threads_queues/src/main.c</code></h3>
+        <h3>3.4.2 Project Configuration: <code>prj.conf</code></h3>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">KCONFIG</span>
+              <span>samples/03_kernel_threads_queues/prj.conf</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># Enable Multithreading & Queues
+CONFIG_MULTITHREADING=y
+CONFIG_NUM_PREEMPT_PRIORITIES=15
+
+# Enable GPIO for LED telemetry feedback
+CONFIG_GPIO=y
+
+# Enable serial console
+CONFIG_SERIAL=y
+CONFIG_CONSOLE=y
+CONFIG_UART_CONSOLE=y
+CONFIG_PRINTK=y</code></pre>
+          </div>
+        </div>
+
+        <h3>3.4.3 Application Source Code: <code>src/main.c</code></h3>
+        <p>Complete source code featuring static thread definitions and message queues:</p>
         <div class="code-container">
           <div class="code-header">
             <div class="code-title">
@@ -389,7 +437,15 @@ void sensor_thread_entry(void *arg1, void *arg2, void *arg3)
             <button class="code-copy-btn">Copy</button>
           </div>
           <div class="code-body">
-            <pre><code>#include &lt;zephyr/kernel.h&gt;
+            <pre><code>/*
+ * Copyright (c) 2026 Apt Computing Labs
+ * "Where Knowledge Meets Innovation"
+ *
+ * Mastering Zephyr RTOS on STM32 - Lab 3: Kernel Multithreading
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include &lt;zephyr/kernel.h&gt;
 #include &lt;zephyr/drivers/gpio.h&gt;
 #include &lt;zephyr/sys/printk.h&gt;
 
@@ -405,15 +461,16 @@ struct sensor_data {
     uint32_t sequence_id;
 };
 
-/* Define Message Queue: 10 items deep */
+/* Define Message Queue: 10 items deep, aligned to 4 bytes */
 K_MSGQ_DEFINE(sensor_msgq, sizeof(struct sensor_data), 10, 4);
 
 /* Onboard LED for status indication */
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
 
-/* Producer Thread */
-void producer_thread_entry(void *, void *, void *)
+/* Producer Thread Entry */
+void producer_thread_entry(void *arg1, void *arg2, void *arg3)
 {
+    ARG_UNUSED(arg1); ARG_UNUSED(arg2); ARG_UNUSED(arg3);
     uint32_t seq = 0;
     int32_t base_temp = 220; // 22.0 C
 
@@ -439,9 +496,10 @@ void producer_thread_entry(void *, void *, void *)
     }
 }
 
-/* Consumer Thread */
-void consumer_thread_entry(void *, void *, void *)
+/* Consumer Thread Entry */
+void consumer_thread_entry(void *arg1, void *arg2, void *arg3)
 {
+    ARG_UNUSED(arg1); ARG_UNUSED(arg2); ARG_UNUSED(arg3);
     struct sensor_data item;
     int32_t temp_sum = 0;
     uint32_t count = 0;
@@ -464,7 +522,7 @@ void consumer_thread_entry(void *, void *, void *)
     }
 }
 
-/* Statically define threads */
+/* Statically define threads with zero runtime malloc overhead */
 K_THREAD_DEFINE(producer_tid, STACK_SIZE, producer_thread_entry,
                 NULL, NULL, NULL, PRODUCER_PRIORITY, 0, 0);
 
@@ -483,6 +541,76 @@ int main(void)
     }
     return 0;
 }</code></pre>
+          </div>
+        </div>
+
+        <h3>3.4.4 Building & Flashing via ST-Link</h3>
+        <p>Compile and flash using these commands:</p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-title">
+              <span class="code-lang-badge">BASH</span>
+              <span>Build and Flash Commands</span>
+            </div>
+            <button class="code-copy-btn">Copy</button>
+          </div>
+          <div class="code-body">
+            <pre><code># 1. Navigate to directory
+cd samples/03_kernel_threads_queues
+
+# 2. Build for target board:
+west build -b nucleo_f401re -p always
+
+# 3. Flash to STM32:
+west flash
+
+# 4. Open serial terminal monitor:
+minicom -D /dev/tty.usbmodem* -b 115200</code></pre>
+          </div>
+        </div>
+
+        <h3>3.4.5 Live Thread Pipeline & Message Queue Simulation Graphic</h3>
+        <p>Observe the preemptive scheduling handoff in real-time as the producer feeds the FIFO queue:</p>
+
+        <!-- Graphical Output Simulation Widget -->
+        <div class="hardware-sim-widget" data-sim="thread-pipeline">
+          <div class="sim-widget-header">
+            <div class="sim-widget-title">
+              <span>⚡ Live Kernel Thread Pipeline Simulator</span>
+              <span class="sim-status-badge"><span class="sim-status-dot"></span> <span>SCHEDULER RUNNING</span></span>
+            </div>
+            <div style="font-size:0.75rem;color:var(--text-muted);">Queue: <strong id="sim-queue-count" style="color:var(--accent-primary);">0/10</strong> items | Preemption: <strong>Active</strong></div>
+          </div>
+          <div class="sim-body-layout">
+            <!-- Left: Graphic Thread State Diagram -->
+            <div class="sim-board-graphic" style="gap:0.75rem;padding:1rem;">
+              <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:0.75rem;width:100%;text-align:center;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--accent-primary);">PRODUCER THREAD (Pri 6)</div>
+                <div style="font-size:0.65rem;color:var(--text-muted);">Period: 1000ms | Generates sensor packet</div>
+              </div>
+              <div style="font-size:1rem;color:var(--accent-primary);font-weight:700;">↓ k_msgq_put()</div>
+              <div style="background:#064e3b;border:1px solid #059669;border-radius:8px;padding:0.75rem;width:100%;text-align:center;">
+                <div style="font-size:0.75rem;font-weight:700;color:#34d399;">ZEPHYR KERNEL FIFO (k_msgq)</div>
+                <div style="font-size:0.65rem;color:#a7f3d0;">Depth: 10 packets | Size: 16 bytes/slot</div>
+              </div>
+              <div style="font-size:1rem;color:var(--status-success);font-weight:700;">↓ k_msgq_get() [Preempts Producer!]</div>
+              <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:0.75rem;width:100%;text-align:center;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--status-success);">CONSUMER THREAD (Pri 4)</div>
+                <div style="font-size:0.65rem;color:var(--text-muted);">Statistical Analysis & UART Dispatch</div>
+              </div>
+            </div>
+            <!-- Right: Serial VCP Output -->
+            <div class="sim-terminal-screen">
+              <div class="sim-terminal-header">
+                <span>ST-Link Serial Terminal Monitor (115200 8N1)</span>
+                <span style="color:#10b981;">● CONNECTED</span>
+              </div>
+              <div class="sim-terminal-log" id="sim-thread-log"></div>
+            </div>
+          </div>
+          <div class="sim-controls-bar">
+            <span>💡 <em>Producer pushes every 3s. Click below to inject a high-rate sample immediately</em></span>
+            <button class="sim-action-btn" id="sim-thread-trigger-btn">🚀 Trigger Instant Sample</button>
           </div>
         </div>
 
